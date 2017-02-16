@@ -78,45 +78,86 @@ public class RiotRequest {
 	 */
 	public void modifyRequest(int request, String id) {
 		url = "https://" + region + ".api.pvp.net";
-		if (!id.isEmpty()) {
 
-			switch (request) {
+		switch (request) {
 
-			case Constants.GET_SUMMONER_BY_NAME:
-				try {
-					url += "/api/lol/" + region + "/v1.4/summoner/by-name/"
-							+ URLEncoder.encode(id, "UTF-8").replace("+", "%20") + "?";
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
-				break;
-
-			case Constants.GET_RANKED_SUMMARY:
-				url += "/api/lol/" + region + "/v1.3/stats/by-summoner/" + id + "/summary?season=SEASON2017&";
-				break;
-
-			case Constants.GET_CURRENT_GAME:
-				url += "/observer-mode/rest/consumer/getSpectatorGameInfo/NA1/" + id + "?";
-				break;
-
-			case Constants.GET_STATIC_CHAMPION:
-				url += "/api/lol/static-data/na/v1.2/champion/" + id + "?";
-				break;
-				
-			case Constants.GET_RANKED_STATS:
-				url += "/api/lol/na/v1.3/stats/by-summoner/" + id + "/ranked?season=SEASON2017&";
-				break;
-				
-			case Constants.GET_LEAGUE_ENTRY:
-				url += "/api/lol/na/v2.5/league/by-summoner/" + id + "/entry?";
-				break;
-				
-			case Constants.GET_PLAYER_SUMMARY:
-				url += "/api/lol/na/v1.3/stats/by-summoner/" + id +"/summary?season=SEASON2017&";
-
+		case Constants.GET_SUMMONER_BY_NAME:
+			try {
+				url += "/api/lol/" + region + "/v1.4/summoner/by-name/"
+						+ URLEncoder.encode(id, "UTF-8").replace("+", "%20") + "?";
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
 			}
-		}
+			break;
 
+		case Constants.GET_RANKED_SUMMARY:
+			url += "/api/lol/" + region + "/v1.3/stats/by-summoner/" + id + "/summary?season=SEASON2017&";
+			break;
+
+		case Constants.GET_CURRENT_GAME:
+			url += "/observer-mode/rest/consumer/getSpectatorGameInfo/NA1/" + id + "?";
+			break;
+
+		case Constants.GET_STATIC_CHAMPION_DATA:
+			url = "https://global.api.pvp.net/api/lol/static-data/" + region + "/v1.2/champion/" + id + "?";
+			break;
+
+		case Constants.GET_RANKED_STATS:
+			url += "/api/lol/na/v1.3/stats/by-summoner/" + id + "/ranked?season=SEASON2017&";
+			break;
+
+		case Constants.GET_LEAGUE_ENTRY:
+			url += "/api/lol/na/v2.5/league/by-summoner/" + id + "/entry?";
+			break;
+
+		case Constants.GET_PLAYER_SUMMARY:
+			url += "/api/lol/na/v1.3/stats/by-summoner/" + id + "/summary?season=SEASON2017&";
+			break;
+
+		case Constants.GET_TOP_CHAMPION_MASTERY:
+			switch (region) {
+
+			case "NA":
+			case "BR":
+			case "JP":
+			case "EUW":
+			case "TR":
+				region += "1";
+				break;
+				
+			case "EUNE":
+				region = "EUN1";
+				break;
+				
+			case "LAN":
+				region = "LA1";
+				break;
+				
+			case "LAS":
+				region = "LA2";
+				break;
+				
+			case "OCE":
+				region = "OC1";
+				break;
+				
+			}
+			url += "/championmastery/location/" + region + "/player/" + id + "/champions?";
+			break;
+			
+		case Constants.GET_CHAMPION_BY_ID:
+			url = "https://global.api.pvp.net/api/lol/static-data/" + region + "/v1.2/champion/" + id + "?";
+			break;
+			
+		case Constants.GET_RECENT_GAMES:
+			url += "/api/lol/" + region + "/v1.3/game/by-summoner/" + id + "/recent?";
+			break;
+			
+		case Constants.GET_STATIC_REALM_DATA:
+			url = "https://global.api.pvp.net/api/lol/static-data/" + region + "/v1.2/realm?";
+			break;
+
+		}
 	}
 
 }
