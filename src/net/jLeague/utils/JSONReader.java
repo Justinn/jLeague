@@ -4,7 +4,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 
@@ -51,6 +54,10 @@ public class JSONReader {
 	public JSONReader(String region) {
 		gson = new Gson();
 		request = new RiotRequest();
+		
+	}
+	
+	private void saveSummoner(String json) {
 		
 	}
 

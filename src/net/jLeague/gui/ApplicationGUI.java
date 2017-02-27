@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -32,6 +33,7 @@ import com.google.gson.JsonSyntaxException;
 import net.jLeague.api.champion.ChampionMastery;
 import net.jLeague.api.game.Game;
 import net.jLeague.api.game.RecentGames;
+import net.jLeague.api.league.League;
 import net.jLeague.api.staticdata.Champion;
 import net.jLeague.api.stats.AggregatedStats;
 import net.jLeague.api.stats.RankedStats;
@@ -54,13 +56,10 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 	@SuppressWarnings("rawtypes")
 	private JComboBox regionBox;
 	private JLabel lblPlayerAnalysis;
-	private int allWins;
-	private int allLosses;
-	private int allChampsKilled;
-	private int allDeaths;
-	private boolean rankedSolo;
 	private JLabel lblFavChamps[];
 	private JLabel lblRecentChampions[];
+	private String soloRank;
+	private String flexRank;
 
 	/**
 	 * Create the Frame and adds all the panels and components to the frame
@@ -117,7 +116,7 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 		lblPlayerAnalysis.setBounds(0, 0, 461, 133);
 		analysisBorder.add(lblPlayerAnalysis);
 		lblPlayerAnalysis.setHorizontalAlignment(SwingConstants.CENTER);
-		lblPlayerAnalysis.setFont(new Font("Arial", Font.ITALIC, 16));
+		lblPlayerAnalysis.setFont(new Font("Arial", Font.PLAIN, 16));
 
 		JLabel lblNewLabel_2 = new JLabel("Player Analysis");
 		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
@@ -131,19 +130,12 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 		favChampsPanel.setBounds(10, 193, 609, 153);
 		basicPanel.add(favChampsPanel);
 
-		lblFavChamps = new JLabel[4];
+		lblFavChamps = new JLabel[5];
 
-		lblFavChamps[0] = new JLabel("");
-		favChampsPanel.add(lblFavChamps[0]);
-
-		lblFavChamps[1] = new JLabel("");
-		favChampsPanel.add(lblFavChamps[1]);
-
-		lblFavChamps[2] = new JLabel("");
-		favChampsPanel.add(lblFavChamps[2]);
-
-		lblFavChamps[3] = new JLabel("");
-		favChampsPanel.add(lblFavChamps[3]);
+		for (int i = 0; i < lblFavChamps.length; i++) {
+			lblFavChamps[i] = new JLabel("");
+			favChampsPanel.add(lblFavChamps[i]);
+		}
 
 		JPanel recentChampsPanel = new JPanel();
 		recentChampsPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"),
@@ -151,19 +143,13 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 		recentChampsPanel.setBounds(10, 357, 609, 153);
 		basicPanel.add(recentChampsPanel);
 
-		lblRecentChampions = new JLabel[4];
+		lblRecentChampions = new JLabel[5];
 
-		lblRecentChampions[0] = new JLabel("");
-		recentChampsPanel.add(lblRecentChampions[0]);
-
-		lblRecentChampions[1] = new JLabel("");
-		recentChampsPanel.add(lblRecentChampions[1]);
-
-		lblRecentChampions[2] = new JLabel("");
-		recentChampsPanel.add(lblRecentChampions[2]);
-
-		lblRecentChampions[3] = new JLabel("");
-		recentChampsPanel.add(lblRecentChampions[3]);
+		for (int i = 0; i < lblRecentChampions.length; i++) {
+			lblRecentChampions[i] = new JLabel("");
+			recentChampsPanel.add(lblRecentChampions[i]);
+			
+		}
 
 		JPanel searchPanel = new JPanel();
 		searchPanel.setBorder(UIManager.getBorder("InternalFrame.border"));
@@ -212,47 +198,81 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 		lblSummonerName.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 15));
 		currentSummonerPanel.add(lblSummonerName);
 		clearSummoner();
+		soloRank = new String("Unranked");
+		flexRank = new String("Unranked");
 	}
 
+	/**
+	 * searchSummoner() - This method handles updates the gui and searches for
+	 * all the input summoner's data
+	 * 
+	 * @throws RiotException
+	 *             if we run into any of those. Will return the error into the
+	 *             gui
+	 */
 	private void searchSummoner() {
 		long timeStart = System.currentTimeMillis();
-		if (summonerNameTxtField.getText().equalsIgnoreCase(""))
-			lblSummonerName.setText("jLeague");
-		else {
-			try {
-				summoner = converter.getSummoner(summonerNameTxtField.getText().toLowerCase(),
-						regionBox.getSelectedItem().toString());
-				if (summoner != null) {
-					lblSummonerName.setText(summoner.getName());
-					ImageIcon icon = converter.obtainProfileIcon(summoner.getProfileIconId(),
-							regionBox.getSelectedItem().toString());
-					lblSummonerProfileIcon.setIcon(icon);
-					updatePlayerAnalysis();
-					loadFavoriteChampions();
-					loadLast4Champions();
-				}
-			} catch (RiotException e) {
-				lblSummonerName.setText(e.getMessage());
-			}
+		clearSummoner();
+		loadSummoner();
+		if (summoner != null) {
+			loadLeagues();
+			updatePlayerAnalysis();
+			loadFavoriteChampions();
+			loadRecentChampions();
 		}
+
 		long timeEnd = System.currentTimeMillis();
 		long time = timeEnd - timeStart;
 		System.out.println("Took " + time / 1000 + " seconds to load this page");
 	}
 
-	private void loadLast4Champions() {
+	/**
+	 * loadSummoner() - Loads the summoner object and displays information that
+	 * it can - Summoner Name - Profile Icon from profileIconId
+	 */
+	private void loadSummoner() {
+		if (summonerNameTxtField.getText().equalsIgnoreCase(""))
+			lblSummonerName.setText("jLeague");
+		else {
+			try {
+				// Get the summoner object
+				summoner = converter.getSummoner(summonerNameTxtField.getText().toLowerCase(),
+						regionBox.getSelectedItem().toString());
+
+				// If we found the summoner object
+				if (summoner != null) {
+
+					// Set the name in the UI to the summoner's name
+					lblSummonerName.setText(summoner.getName());
+
+					// Get the icon using the summoner's profile icon id
+					ImageIcon icon = converter.obtainProfileIcon(summoner.getProfileIconId(),
+							regionBox.getSelectedItem().toString());
+
+					// Set the icon in the UI
+					lblSummonerProfileIcon.setIcon(icon);
+				}
+			} catch (RiotException e) {
+				lblSummonerName.setText(e.getMessage());
+			}
+		}
+	}
+
+	private void loadRecentChampions() {
 		RecentGames recent;
 		try {
 			recent = converter.getRecentGames(summoner.getId(), regionBox.getSelectedItem().toString());
 			Set<Game> games = recent.getGames();
 			int count = 0;
 			for (Game game : games) {
-				if (count < 4) {
+				if (count < lblRecentChampions.length) {
 					if (!game.equals(null)) {
 						String name = converter
 								.getChampionById(game.getChampionId(), regionBox.getSelectedItem().toString()).getKey();
-						lblRecentChampions[count]
-								.setIcon(converter.getChampionIcon(name, regionBox.getSelectedItem().toString()));
+
+						ImageIcon icon = converter.getChampionIcon(name, regionBox.getSelectedItem().toString());
+
+						lblRecentChampions[count].setIcon(resizeImageIcon(75, 75, icon));
 					}
 				}
 				count++;
@@ -266,11 +286,15 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 		try {
 			List<ChampionMastery> topChamps = converter.getTopChampionMastery(summoner.getId(),
 					regionBox.getSelectedItem().toString());
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < lblFavChamps.length; i++) {
 				if (!topChamps.get(i).equals(null)) {
+
 					String name = converter.getChampionById((int) topChamps.get(i).getChampionId(),
 							regionBox.getSelectedItem().toString()).getKey();
-					lblFavChamps[i].setIcon(converter.getChampionIcon(name, regionBox.getSelectedItem().toString()));
+
+					ImageIcon icon = converter.getChampionIcon(name, regionBox.getSelectedItem().toString());
+
+					lblFavChamps[i].setIcon(resizeImageIcon(75, 75, icon));
 				}
 			}
 		} catch (
@@ -279,69 +303,41 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 			e.printStackTrace();
 		}
 	}
-
-	public Champion getChampionById(int championId, String region) {
-		Champion champion;
-		try {
-			champion = converter.getChampionById(championId, region);
-			return champion;
-		} catch (RiotException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private void loadBasicStats() {
-		try {
-			RankedStats rankedStats = converter.getRankedStats(summoner.getId(),
-					regionBox.getSelectedItem().toString());
-			for (int i = 1; i < rankedStats.getChampions().size(); i++) {
-				if (rankedStats.getChampions().get(i).getId() == 0) {
-					AggregatedStats allStats = rankedStats.getChampions().get(i).getStats();
-					allWins = allStats.getTotalSessionsWon();
-					allLosses = allStats.getTotalSessionsLost();
-					allChampsKilled = allStats.getTotalChampionKills();
-					allDeaths = allStats.getTotalDeathsPerSession();
-					rankedSolo = true;
-				}
-			}
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-		} catch (RiotException e) {
-			System.out.println(e.getMessage());
-			rankedSolo = false;
-		}
-	}
-
-	private void loadRankedSummary() {
-
+	
+	private ImageIcon resizeImageIcon(int width, int height, ImageIcon icon) {
+		Image image = icon.getImage();
+		image = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+		icon = new ImageIcon(image);
+		return icon;
 	}
 
 	private void updatePlayerAnalysis() {
-		String pA = new String();
-		clearSummoner();
-		loadBasicStats();
-		if (summoner.getSummonerLevel() < 30)
-			pA = "<b>" + summoner.getName() + "</b> is currently level <b>" + summoner.getSummonerLevel() + "</b>.";
-		else if (rankedSolo) {
-			loadRankedInformation();
-			pA = summoner.getName() + " is currently ranked ";
-		} else if (!rankedSolo) {
-			pA = "<b>" + summoner.getName() + "</b> is currently level <b>" + summoner.getSummonerLevel() + "</b>. <b>"
-					+ summoner.getName() + "</b> is currently <b>unranked</b>.";
-		}
-		lblPlayerAnalysis.setText("<html><center>" + pA + "</center></html>");
+		String analysis = new String();
+		analysis = "<b>" + summoner.getName() + "</b> is currently level <b>" + summoner.getSummonerLevel()
+				+ "</b>. <b>" + soloRank + "</b> in <i>Solo Queue</i> and <b>" + flexRank
+				+ "</b> in <i>Flex Queue</i>.";
+		lblPlayerAnalysis.setText("<html><center>" + analysis + "</center></html>");
 	}
 
-	private void loadRankedInformation() {
-
+	private void loadLeagues() {
+		if (summoner != null) {
+			try {
+				List<League> leagues = converter.getLeague(summoner.getId(), "NA");
+				for (League league : leagues) {
+					if (league.getQueue().equalsIgnoreCase("RANKED_SOLO_5x5"))
+						soloRank = league.getTier() + " " + league.getEntries().get(0).getDivision();
+					else if (league.getQueue().equalsIgnoreCase("RANKED_FLEX_SR"))
+						flexRank = league.getTier() + " " + league.getEntries().get(0).getDivision();
+				}
+			} catch (RiotException e) {
+				System.out.println(e.getMessage());
+			}
+		}
 	}
 
 	private void clearSummoner() {
-		allWins = 0;
-		allLosses = 0;
-		allDeaths = 0;
-		allChampsKilled = 0;
+		soloRank = "Unranked";
+		flexRank = "Unranked";
 		for (JLabel favChamp : lblFavChamps)
 			favChamp.setIcon(null);
 		for (JLabel recentChamp : lblRecentChampions)
@@ -352,8 +348,9 @@ public class ApplicationGUI extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		System.out.println(e.getActionCommand());
-		if (e.getActionCommand().equalsIgnoreCase("Search")) {
-			searchSummoner();
+		if (e.getActionCommand().toString().equalsIgnoreCase("Search")) {
+			if (summonerNameTxtField.toString().equalsIgnoreCase(""))
+				searchSummoner();
 		}
 	}
 }

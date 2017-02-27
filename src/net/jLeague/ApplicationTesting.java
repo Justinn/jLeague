@@ -38,10 +38,10 @@ public class ApplicationTesting {
 		// System.out.println("=========PLAYER SUMMARY===========\n");
 		// getPlayerSummary();
 		// System.out.println("=========LEAGUE STATS===========\n");
-		// getLeagues();
+		 getLeagues();
 		// getChampions();
 		// getChampionMastery();
-		getRecentChampions();
+		//getRecentChampions();
 	}
 
 	private static void getRecentChampions() {

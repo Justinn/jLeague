@@ -37,6 +37,13 @@ public class RiotRequest {
 		response = new String();
 	}
 
+	/**
+	 * now() - finishes the url and makes a connection the riot api. returns the
+	 * response in the form of a json string
+	 * 
+	 * @return response from riot api
+	 * @throws RiotException
+	 */
 	public String now() throws RiotException {
 		try {
 			if (!url.contains("dragon"))
@@ -124,35 +131,35 @@ public class RiotRequest {
 			case "TR":
 				region += "1";
 				break;
-				
+
 			case "EUNE":
 				region = "EUN1";
 				break;
-				
+
 			case "LAN":
 				region = "LA1";
 				break;
-				
+
 			case "LAS":
 				region = "LA2";
 				break;
-				
+
 			case "OCE":
 				region = "OC1";
 				break;
-				
+
 			}
 			url += "/championmastery/location/" + region + "/player/" + id + "/champions?";
 			break;
-			
+
 		case Constants.GET_CHAMPION_BY_ID:
 			url = "https://global.api.pvp.net/api/lol/static-data/" + region + "/v1.2/champion/" + id + "?";
 			break;
-			
+
 		case Constants.GET_RECENT_GAMES:
 			url += "/api/lol/" + region + "/v1.3/game/by-summoner/" + id + "/recent?";
 			break;
-			
+
 		case Constants.GET_STATIC_REALM_DATA:
 			url = "https://global.api.pvp.net/api/lol/static-data/" + region + "/v1.2/realm?";
 			break;

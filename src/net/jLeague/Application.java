@@ -4,7 +4,6 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import net.jLeague.gui.ApplicationGUI;
-import net.jLeague.utils.Updater;
 
 public class Application {
 
